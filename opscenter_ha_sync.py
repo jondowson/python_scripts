@@ -11,7 +11,7 @@ cluster = Cluster(execution_profiles={EXEC_PROFILE_DEFAULT: profile})
 session = cluster.connect()
 
 # ******************************************************
-# ABOUT:
+# ABOUT: version - 0.5.1
 # ******************************************************
 # this script is run simultaneously on both the active and passive Opscenter servers (fired by a cron job every 5 mins).
 # this script determines if host machine is the active or passive one.
