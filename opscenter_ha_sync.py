@@ -15,7 +15,7 @@ session = cluster.connect()
 # ******************************************************
 # this script is run simultaneously on both the active and passive Opscenter servers (fired by a cron job every 5 mins).
 # this script determines if host machine is the active or passive one.
-# on active server it will push any new / updated config files from opscenter folder to Cassnadra + remove from cassandra any deleted file entries.
+# on active server it will push any new / updated config files from opscenter folder to Cassandra + remove from Cassandra any deleted file entries.
 # on passive server it will 'remove' any files (by renaming with a timestamp) if they no longer exist in Cassandra table + pull down any new / updated files.
 # md5checksums are used to compare file versions.
 
@@ -101,7 +101,7 @@ if local_isActive == True:
 # ======================================================
 # [4] ON PASSIVE NODE:
 # --> pause a short time to allow propogation of any changes, prompted by the running of this script on the active node, to this DC.
-# --> check all local files exist in cassandra - if not, delete them locally as they do not exist on the active node.
+# --> check all local files exist in cassandra - if not, 'delete' (rename) them locally as they do not exist on the active node.
 # --> pull any updated or new config files from cassandra onto the local file system.
 if local_isActive == False:
     time.sleep( 10 )
