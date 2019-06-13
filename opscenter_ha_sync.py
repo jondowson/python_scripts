@@ -112,7 +112,7 @@ if local_isActive == False:
         for f in f_names:
             # get the full path of the file.
             local_configFilePath = (os.path.join(root, f))
-            # ignore files that have been backed and the pol file.
+            # ignore files that have been backed up and the pol file.
             if local_configFilePath.find("primary_opscenter_location") \
             or local_configFilePath.find(".backup") \
                 pass
