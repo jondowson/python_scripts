@@ -19,7 +19,7 @@
 
 **prerequisites**    
 
-* dse python driver is installed on both opscenter nodes.    
+* dse python driver is installed on both Opscenter nodes.    
 * necessary authentication is setup for the driver to talk to the Opscenter storage cluster.    
 * the Opscenter service is managing the metrics for the Opscenter storage cluster.    
 * --> during a fail over event, the passive server will reach out and update the 'address.yaml' of every agent.    
