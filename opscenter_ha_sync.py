@@ -68,7 +68,7 @@ if local_isActive == True:
             local_configFilePath = (os.path.join(root, f))
             # ignore files that have been backed and the pol file.
             if local_configFilePath.find("primary_opscenter_location") \
-            or local_configFilePath.find(".backup") \
+            or local_configFilePath.find(".backup"):
                 pass
             else:
                 # get the md5sum of the file.
