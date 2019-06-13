@@ -30,7 +30,7 @@ local_polPath = '/var/lib/opscenter/failover/primary_opscenter_location'
 local_agentAddressYamlPath = '/var/lib/datastax-agent/conf/address.yaml'
 # [D] the reachable ip of this machine from the other opscenter node.
 local_serverIp = "x.x.x.x"
-# choose + amend appropriate create keyspace command from these three templates.
+# [E] choose + amend appropriate create keyspace command from these three templates.
 keyspace_cmd = "CREATE KEYSPACE IF NOT EXISTS ha WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};"
 #keyspace_cmd = "CREATE KEYSPACE IF NOT EXISTS ha WITH replication = {'class': 'NetworkTopologyStrategy', 'DC1' : 1};"
 #keyspace_cmd = "CREATE KEYSPACE IF NOT EXISTS ha WITH replication = {'class': 'NetworkTopologyStrategy', 'DC1' : 3, 'DC2' : 3};"
