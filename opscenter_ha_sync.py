@@ -11,7 +11,7 @@ cluster = Cluster(execution_profiles={EXEC_PROFILE_DEFAULT: profile})
 session = cluster.connect()
 
 # ******************************************************
-# ABOUT: version - 0.6.1
+# ABOUT: version - 0.6.2
 # ******************************************************
 # this script is run simultaneously on both the active and passive Opscenter servers (fired by a cron job every 5 mins).
 # this script determines if host machine is the active or passive one.
@@ -31,6 +31,14 @@ local_agentAddressYamlPath = '/var/lib/datastax-agent/conf/address.yaml'
 # [D] the reachable ip of this machine from the other opscenter node.
 local_serverIp = "x.x.x.x"
 # ******************************************************
+
+# check required files exist - if not bail out with helpful error message
+if not os.path.isdir(local_opsConfigFolderPath) \
+or not os.path.isfile(local_agentAddressYamlPath):
+    print "Required file not found - check fs and entries at top of script"
+if not os.path.isfile(local_polPath) \
+and not os.path.isfile(local_polPath + '.dormant'):
+    print "Required 'primary_opscenter_location' file not found - check fs and entry at top of script"
 
 # helper function for reading file into bytes
 def file_as_bytes(file):
