@@ -17,6 +17,13 @@
 * the functionality of this script is usually performed by rsync.    
 * this script was developed for a customer where this was not an option.       
 
+**prerequisites**    
+
+* dse python driver is installed on both opscenter nodes.    
+* necessary authentication is setup for the driver to talk to the Opscenter storage cluster.    
+* the Opscenter service is managing the metrics for the Opscenter storage cluster.    
+* --> as the datastax agent local to the node is queried for its 'stomp_address' to determine the active server.    
+
 **instructions**    
 
 1) on both nodes: install dse python driver.    
