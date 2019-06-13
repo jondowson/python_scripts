@@ -25,7 +25,7 @@ session = cluster.connect()
 # [A] local opscenter config folder path.
 local_opsConfigFolderPath = '/etc/opscenter'
 # [B] path to active opscenter ip file - file will exist on passive server only.
-local_polPath = '/var/lib/opscenter/failover/primary_opscenter_location'.
+local_polPath = '/var/lib/opscenter/failover/primary_opscenter_location'
 # [C] local datastax-agent address.yaml path
 local_agentAddressYamlPath = '/var/lib/datastax-agent/conf/address.yaml'
 # [D] the reachable ip of this machine from the other opscenter node.
