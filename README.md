@@ -9,7 +9,9 @@
 **about**
 
 * this script syncs the opscenter config folder on the active and passive nodes in an HA deployment.    
-* syncs the active node's opscenter config folder(s) into Cassandra and pulls down into corresponding passive node folder ( /etc/opscenter/ on a package install).  
+* syncs the active node's opscenter config folder(s) into Cassandra and pulls down into corresponding passive node folder.    
+* --> i.e. /etc/opscenter/ and /var/lib/opscenter/ssl (package install default folders).    
+* --> additional folders may be specified.      
 * redundant files are timestamp renamed (not deleted).    
 * the primary_opscenter_location file is renamed on a switch over to avoid manual intervention.    
 * the required Cassandra table is made by the script.
