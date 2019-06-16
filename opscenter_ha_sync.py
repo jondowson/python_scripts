@@ -81,7 +81,7 @@ if local_isActive == True:
             for f in f_names:
                 # get the full local path of the file.
                 local_configFilePath = (os.path.join(root, f))
-                # ignore files that have been backed and the pol file.
+                # ignore files that have been backed up and the pol file.
                 if "primary_opscenter_location" in f or ".backup" in f:
                     pass
                 else:
