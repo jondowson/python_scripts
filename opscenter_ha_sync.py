@@ -11,23 +11,25 @@ cluster = Cluster(execution_profiles={EXEC_PROFILE_DEFAULT: profile})
 session = cluster.connect()
 
 # ******************************************************
-# ABOUT: version - 0.6.3
+# ABOUT: version - 0.6.4
 # ******************************************************
 # this script is run simultaneously on both the active and passive Opscenter servers (fired by a cron job every 5 mins).
 # this script determines if host machine is the 'active' or 'passive' one.
-# on the active server it will push any new / updated config files from opscenter folder to Cassandra + remove from Cassandra any deleted file entries.
+# on the active server it will push any new / updated config files from opscenter folder(s) to Cassandra + remove from Cassandra any deleted file entries.
 # on the passive server it will 'remove' any files (by renaming with a timestamp) if they no longer exist in Cassandra table + pull down any new / updated files.
 # md5checksums are used to compare file versions.
 
 # ******************************************************
 # FILL THESE IN:
 # ******************************************************
-# [A] local opscenter config folder path.
-local_opsConfigFolderPath = '/etc/opscenter'
+# [A] local opscenter config folder(s) paths to sync.
+# - add extra paths to array as you see appropriate.
+# - you may or may not wish to sync the ssl folder.
+array_syncFolderPaths = ["/etc/opscenter", "/var/lib/opscenter/ssl"]
 # [B] path to active opscenter ip file - file will exist on passive server only.
-local_polPath = '/var/lib/opscenter/failover/primary_opscenter_location'
+local_polPath = '/etc/opscenter/primary_opscenter_location'
 # [C] local datastax-agent address.yaml path
-local_agentAddressYamlPath = '/var/lib/datastax-agent/conf/address.yaml'
+local_agentAddressYamlPath = "/var/lib/datastax-agent/conf/address.yaml"
 # [D] the reachable ip of this machine from the other opscenter node.
 local_serverIp = "x.x.x.x"
 # [E] choose + amend appropriate create keyspace command from these three templates.
@@ -37,11 +39,10 @@ keyspace_cmd = "CREATE KEYSPACE IF NOT EXISTS ha WITH replication = {'class': 'S
 # ******************************************************
 
 # check required files exist - if not bail out with helpful error message
-if not os.path.isdir(local_opsConfigFolderPath) \
-or not os.path.isfile(local_agentAddressYamlPath):
-    print "Required file not found - check fs and entries at top of script"
-if not os.path.isfile(local_polPath) \
-and not os.path.isfile(local_polPath + '.dormant'):
+for folderPath in array_syncFolderPaths:
+    if not os.path.isdir(folderPath):
+        print "Required folder not found - check fs and entries at top of script"
+if not os.path.isfile(local_polPath) and not os.path.isfile(local_polPath + '.dormant') or not os.path.isfile(local_agentAddressYamlPath):
     print "Required 'primary_opscenter_location' file not found - check fs and entry at top of script"
 
 # helper function for reading file into bytes
@@ -75,28 +76,28 @@ if local_isActive == True:
         newName = local_polPath + '.dormant'
         os.rename(local_polPath, newName)
     # walk through all local opscenter config files including those in sub-folders.
-    for root, d_names, f_names in os.walk(local_opsConfigFolderPath):
-        for f in f_names:
-            # get the full local path of the file.
-            local_configFilePath = (os.path.join(root, f))
-            # ignore files that have been backed and the pol file.
-            if "primary_opscenter_location" in f \
-            or ".backup" in f:
-                pass
-            else:
-                # get the md5sum of the file.
-                local_md5sum = hashlib.md5(file_as_bytes(open(local_configFilePath, 'rb'))).hexdigest()
-                lookup_stmt = "SELECT filepath, contents, md5sum FROM ha.active_files WHERE filepath=%s"
-                result = session.execute(lookup_stmt, [local_configFilePath])
-                r = result.one();
-                # if response is empty - then file must be new on active server - so write it into Cassandra.
-                # - or if local_md5sum is different to that stored in Cassandra, write updated file.
-                if r is None or local_md5sum != r[2]:
-                    thisFile = open(local_configFilePath, 'rb')
-                    local_contents = thisFile.read()
-                    CQLString = "INSERT INTO ha.active_files (filePath,contents,md5sum) VALUES (%s,%s,%s)"
-                    session.execute(CQLString, (local_configFilePath,local_contents,local_md5sum))
-                    thisFile.close
+    for folderPath in array_syncFolderPaths:
+        for root, d_names, f_names in os.walk(folderPath):
+            for f in f_names:
+                # get the full local path of the file.
+                local_configFilePath = (os.path.join(root, f))
+                # ignore files that have been backed and the pol file.
+                if "primary_opscenter_location" in f or ".backup" in f:
+                    pass
+                else:
+                    # get the md5sum of the file.
+                    local_md5sum = hashlib.md5(file_as_bytes(open(local_configFilePath, 'rb'))).hexdigest()
+                    lookup_stmt = "SELECT filepath, contents, md5sum FROM ha.active_files WHERE filepath=%s"
+                    result = session.execute(lookup_stmt, [local_configFilePath])
+                    r = result.one();
+                    # if response is empty - then file must be new on active server - so write it into Cassandra.
+                    # - or if local_md5sum is different to that stored in Cassandra, write updated file.
+                    if r is None or local_md5sum != r[2]:
+                        thisFile = open(local_configFilePath, 'rb')
+                        local_contents = thisFile.read()
+                        CQLString = "INSERT INTO ha.active_files (filePath,contents,md5sum) VALUES (%s,%s,%s)"
+                        session.execute(CQLString, (local_configFilePath,local_contents,local_md5sum))
+                        thisFile.close
     # if config file does not exist locally then remove it from cassandra.
     rows = session.execute('SELECT * FROM ha.active_files')
     for row in rows:
@@ -120,29 +121,30 @@ if local_isActive == False:
     local_dormantPOLF = local_polPath + '.dormant'
     if os.path.isfile(local_dormantPOLF):
         os.rename(local_dormantPOLF, local_polPath)
-    # walk through all files including those in sub-folders and check against Cassandra table.
-    for root, d_names, f_names in os.walk(local_opsConfigFolderPath):
-        for f in f_names:
-            # get the full path of the file.
-            local_configFilePath = (os.path.join(root, f))
-            # ignore files that have been backed up and the pol file.
-            if "primary_opscenter_location" in f \
-            or ".backup" in f:
-                pass
-            else:
-                # get the md5sum of the file.
-                local_md5hash = hashlib.md5(file_as_bytes(open(local_configFilePath, 'rb'))).hexdigest()
-                lookup_stmt = "SELECT * FROM ha.active_files WHERE filepath=%s"
-                result = session.execute(lookup_stmt, [local_configFilePath])
-                r = result.one();
-                # if response is empty - then file is not listed in cassandra and therefore must not exist on active server.
-                # - so timestamp rename it to disable it on local file system.
-                if r is None:
-                    dt = str(datetime.datetime.now())
-                    newName = local_configFilePath +'_'+ dt + '.backup'
-                    os.rename(local_configFilePath, newName)
-                else:
-                    pass
+    for folderPath in array_syncFolderPaths:
+        for root, d_names, f_names in os.walk(folderPath):
+            # walk through all files including those in sub-folders and check against Cassandra table.
+            for root, d_names, f_names in os.walk(local_opsFolderToSync):
+                for f in f_names:
+                    # get the full path of the file.
+                    local_configFilePath = (os.path.join(root, f))
+                    # ignore files that have been backed up and the pol file.
+                    if "primary_opscenter_location" in f or ".backup" in f:
+                        pass
+                    else:
+                        # get the md5sum of the file.
+                        local_md5hash = hashlib.md5(file_as_bytes(open(local_configFilePath, 'rb'))).hexdigest()
+                        lookup_stmt = "SELECT * FROM ha.active_files WHERE filepath=%s"
+                        result = session.execute(lookup_stmt, [local_configFilePath])
+                        r = result.one();
+                        # if response is empty - then file is not listed in cassandra and therefore must not exist on active server.
+                        # - so timestamp rename it to disable it on local file system.
+                        if r is None:
+                            dt = str(datetime.datetime.now())
+                            newName = local_configFilePath +'_'+ dt + '.backup'
+                            os.rename(local_configFilePath, newName)
+                        else:
+                            pass
     # if a filepath in Cassandra does not exist locally or its md5sum differs, then pull it down.
     rows = session.execute('SELECT * FROM ha.active_files')
     for row in rows:

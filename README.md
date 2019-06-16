@@ -1,13 +1,15 @@
-# opscenter_ha_sync.py
+# python_scripts    
 
-**versioning**
+## opscenter_ha_sync.py
 
-0.6.3
+**version**
+
+0.6.4
 
 **about**
 
 * this script syncs the opscenter config folder on the active and passive nodes in an HA deployment.    
-* syncs the active node's opscenter config folder into Cassandra and pulls down into corresponding passive node folder ( /etc/opscenter/ on a package install).       
+* syncs the active node's opscenter config folder(s) into Cassandra and pulls down into corresponding passive node folder ( /etc/opscenter/ on a package install).  
 * redundant files are timestamp renamed (not deleted).    
 * the primary_opscenter_location file is renamed on a switch over to avoid manual intervention.    
 * the required Cassandra table is made by the script.
@@ -29,5 +31,4 @@
 
 1) on both nodes: install dse python driver.    
 2) on both nodes: add opscenter_ha_sync.py and edit the user defined section.   
-3) on both nodes: setup a cronjob to run script every 5 mins.    
-4) go down pub.               
+3) on both nodes: setup a cronjob to run script every 5 mins.                
